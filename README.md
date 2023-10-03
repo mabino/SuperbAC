@@ -1,0 +1,2 @@
+# SuperbAC
+A superb autoclicker.
