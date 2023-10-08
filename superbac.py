@@ -3,24 +3,46 @@ import threading
 import time
 import pyautogui
 import keyboard  # Import the keyboard library
-
+import os, sys
 
 app_name = "Superb AC"
 app_window_size = "320x160"
 selected_hotkey = 'F7'
 start_msg = f"Start Clicks ({selected_hotkey})"
 stop_msg = f"Stop Clicks ({selected_hotkey})"
-
+mouse_x, mouse_y = 200, 200
 
 # Default click interval in milliseconds
 default_click_interval = 1000
 
+def set_icon():
+    try:
+        if getattr(sys, 'frozen', False):  # Check if the script is frozen (i.e., packaged)
+            base_path = sys._MEIPASS  # Get the base path of the packaged application
+        else:
+            base_path = os.path.abspath(".")  # Use the current directory if not packaged
+        icon_path = os.path.join(base_path, "superbac.ico")
+        root.iconbitmap(icon_path)
+    except Exception as e:
+        print(f"Error setting icon: {e}")
+
+
+
+def resource_path(relative_path):
+    try:
+        base_path = sys._MEIPASS
+    except Exception:
+        base_path = os.path.abspath(".")
+
+    return os.path.join(base_path, relative_path)
+
+
 def background_task():
-    global is_running
+    global is_running, mouse_x, mouse_y
     while is_running:
-        x, y = pyautogui.position()
-        pyautogui.click(100, 100)
+        pyautogui.click(mouse_x, mouse_y)
         time.sleep(click_interval / 1000)  # Convert to seconds
+        mouse_x, mouse_y = pyautogui.position()
 
 def toggle_floating():
     if float_var.get():
@@ -33,9 +55,13 @@ def toggle_thread(event=None):
     if is_running:
         is_running = False
         stop_button.config(text=start_msg)
+        # Make the Click Interval field interactive when not running
+        click_interval_entry.config(state="normal")
     else:
         is_running = True
         stop_button.config(text=stop_msg)
+        # Make the Click Interval field read-only when running
+        click_interval_entry.config(state="disabled")
         thread = threading.Thread(target=background_task)
         thread.start()
 
@@ -65,6 +91,8 @@ click_interval = default_click_interval  # Initialize with default value
 root = tk.Tk()
 root.title(app_name)
 root.attributes("-topmost", True)
+# Call set_icon to set the application icon
+set_icon()
 # Center the Tkinter window on the primary display
 def center_window(window):
     window.update_idletasks()
@@ -101,6 +129,8 @@ def stop_background_task():
     global is_running
     is_running = False
     stop_button.config(text=start_msg)
+    # Make the Click Interval field interactive when not running
+    click_interval_entry.config(state="normal")
 
 # Bind the F7 key to stop the background task
 keyboard.add_hotkey(selected_hotkey, toggle_thread)
